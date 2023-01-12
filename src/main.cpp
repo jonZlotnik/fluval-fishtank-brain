@@ -4,6 +4,7 @@
 
 
 #include "fluval_lights.hpp"
+#include "auto_controller.hpp"
 #include "config.hpp"
 #include "wifi.hpp"
 
@@ -30,16 +31,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
   msg[length] = '\0';
   Serial.println(msg);
 
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1') {
-    digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is active low on the ESP-01)
+  if (strcmp(msg, "auto") == 0) {
+
   } else {
-    digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off by making the voltage HIGH
+    FluvalStateTransition transition = FluvalStateTransition(msg);
+    fluvalClient.enqueue(transition);
   }
-  FluvalStateTransition transition = FluvalStateTransition(msg);
-  fluvalClient.enqueue(transition);
 }
 
 void reconnect() {
