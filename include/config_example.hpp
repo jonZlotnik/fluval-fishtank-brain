@@ -1,5 +1,5 @@
 // RENAME FILE TO: 
-// config.h
+// config.hpp
 
 #ifndef _CONFIG
 #define _CONFIG

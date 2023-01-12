@@ -1,3 +1,8 @@
+#include <queue>
+#include <IRremoteESP8266.h>
+#include <IRsend.h>
+
+#define IR_CMD          int
 #define IR_BLUE         0xF7609F
 #define IR_BLUE_1       0xF750AF
 #define IR_BLUE_2       0xF7708F
@@ -23,6 +28,37 @@
 #define IR_WHITE_POWER  0xF7C03F
 #define IR_COLOR_CYCLE  0xF7E817
 
+enum LightStates { AUTO,
+                     RESET,
+                     DAY,
+                     NIGHT,
+                     SUNRISE,
+                     SUNSET };
+
+class FluvalClient {
+    private:
+        std::queue<IR_CMD> command_queue;
+        IRsend ir_sender;
+
+    public:
+        FluvalClient() {
+            IRsend default_ir_sender(4);
+            this->ir_sender = default_ir_sender;
+        }
+        FluvalClient(IRsend ir_sender) {
+            this->ir_sender = ir_sender;
+        }
+        void loop();
+};
+
+class LightCommandQueue
+{
+    public:
+        LightCommandQueue();
+        void add_command(int data, int interval = 1000);
+        void add_repeat_command(int data, int times, int interval = 1000);
+        void execute();
+};
 
 void init_lights();
 void rise_sun();

@@ -36,7 +36,7 @@ Watch the terminal for logs comming from the board.
 
 The controller has two interfaces through which it can be accessed:
 
-1. the MQTT interface which subscribes to a configured MQTT broker and topic.
+1. the MQTT interface which subscribes to configured MQTT broker and topics.
 2. the http interface which provides an intial webpage for network configuration.
 
 Continue reading for how to connect to each of them.
