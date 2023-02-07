@@ -18,7 +18,7 @@ const uint16_t irLED = 4; // ESP8266 GPIO pin to use. Recommended: 4 (D2).
 FluvalClient fluvalClient(irLED);
 AutoController autoController(
   CONFIG_LONGITUDE, CONFIG_LATITUDE,
-  "EST5EDT,M3.2.0/2:00:00,M11.1.0/2:00:00", 
+  CONFIG_TIMEZONE, 
   &fluvalClient, ntpServer);
 
 #define MSG_BUFFER_SIZE (64)
