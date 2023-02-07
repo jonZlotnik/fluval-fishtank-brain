@@ -22,6 +22,12 @@ Developer environment:
 
 Note: Using the PlatformIO VSCode extension makes for a more ergonomic development environment, but that is beyond the scope of this readme. Please refer to the beautiful PlatformIO docs for instructions on using.
 
+### Configuring
+
+To configure the firmware before compilation and flashing it to the ESP8266, we
+must rename the [config_example.hpp](include/config_example.hpp) file to `config.hpp`
+and change the values to match your setup.
+
 ### Compiling & Uploading
 
 Configuration for building, uploading, and monitoring over a serial interface is specified in `platformio.ini`
@@ -45,15 +51,15 @@ Continue reading for how to connect to each of them.
 
 The `docker-compose.yml` file in the root of this repo will spin up an
 `eclipse-mosquitto` image as a container named `mosquitto`. Config, data, and log
-directories are subdirectories of `./mosquito/`.
+directories are mounted from subdirectories of `./mosquito/`.
 
 From the root of the repository, run
 
 `docker compose up`
 
-#### Docker background
+#### Docker tips
 
-To interact with the broker running in the container, we execute the mosquitto
+To interact with the broker running in the container, we can execute the mosquitto
 binaries already available in the image with `docker exec` commands.
 
 For example:
@@ -65,19 +71,17 @@ the [mosquitto documentation](https://mosquitto.org/documentation/).
 
 #### MQTT interface definition
 
-The firmware subscribes to the following topics and listens for the following messages:
+The firmware subscribes to the following topics and listens for the respective messages:
 
-- `fish/fluval-flex-9g/lights`
-  - `reset`
-  - `day`
-  - `night`
-  - `sunrise`
-  - `sunset`
-  - `auto`
-- `fish/fluval-flex-9g/lights/raw`
+- `fish/fluval-flex-9g/lights` messages:
+  - `reset` brings the fluval light controller to a known state.
+    This is useful because it is not possible to query the state of the actual fishtank without light/color sensors and some fancy math. So every now and then, we can simply `reset` the tank to ensure smooth operation incase the tank's state desynchronized from our controller's state.
+  - `day` smoothly transitions from night settings to day settings.
+  - `night` smoothly transitions from day settings to night settings.
+  - `auto` calculates sunrise and sunset times based on [configured](include/config_example.hpp) location and
+  timezone and schedules state transitions to match. ~~ queries preconfigured web APIs for time and sun data to match your location based on your public IP address. ~~
+- (COMING SOON!) `fish/fluval-flex-9g/lights/raw` messages:
   - `<hex code>` - known codes are [here](src/_fluval_lights.h)
-- `time-sync/epoch`
-  - `<epoch integer>` - eg: `1673291694`
 
 #### HTTP interrrface description
 
