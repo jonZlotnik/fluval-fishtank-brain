@@ -1,3 +1,6 @@
+#ifndef FluvalLights_h
+#define FluvalLights_h
+
 #include <queue>
 #include <map>
 #include <vector>
@@ -36,22 +39,36 @@
 #define DEFAULT_IR_PIN 4
 #define DEFAULT_MIN_MILLIS_INTERVAL 500
 
+typedef const char * FluvalState;
+
 class FluvalStateTransition
 {
 private:
     std::vector<IR_CMD> stateTransition;
+    FluvalState finalState;
 
 public:
+    static FluvalState RESET() {
+        return "reset";
+    }
+    static FluvalState DAY() {
+        return "day";
+    }
+    static FluvalState NIGHT() {
+        return "night";
+    }
     FluvalStateTransition(std::vector<IR_CMD> stateTransition)
     {
         this->stateTransition = stateTransition;
+
     }
-    FluvalStateTransition(char *stateTransitionName)
+    FluvalStateTransition(FluvalState stateTransitionName)
     {
         Serial.println(stateTransitionName);
         stateTransition = std::vector<int>();
-        if (strcmp(stateTransitionName, "reset") == 0)
+        if (strcmp(stateTransitionName, FluvalStateTransition::RESET()) == 0)
         {
+            this->finalState = FluvalStateTransition::RESET();
             Serial.println("RESET received");
             this->stateTransition.push_back(IR_NIGHT);
             this->stateTransition.push_back(IR_WHITE_POWER);
@@ -67,8 +84,9 @@ public:
             }
             this->stateTransition.push_back(IR_RGB_POWER);
         }
-        else if (strcmp(stateTransitionName, "day") == 0)
+        else if (strcmp(stateTransitionName, FluvalStateTransition::DAY()) == 0)
         {
+            this->finalState = FluvalStateTransition::DAY();
             Serial.println("DAY received");
             this->stateTransition.push_back(IR_WHITE_POWER);
             for (int i = 0; i < 16; i++)
@@ -76,27 +94,10 @@ public:
                 this->stateTransition.push_back(IR_WHITE_PLUS);
             }
         }
-        else if (strcmp(stateTransitionName, "night") == 0)
+        else if (strcmp(stateTransitionName, FluvalStateTransition::NIGHT()) == 0)
         {
+            this->finalState = FluvalStateTransition::NIGHT();
             Serial.println("NIGHT received");
-            for (int i = 0; i < 16; i++)
-            {
-                this->stateTransition.push_back(IR_WHITE_MINUS);
-            }
-            this->stateTransition.push_back(IR_NIGHT);
-        }
-        else if (strcmp(stateTransitionName, "sunrise") == 0)
-        {
-            Serial.println("SUNRISE received");
-            this->stateTransition.push_back(IR_WHITE_POWER);
-            for (int i = 0; i < 16; i++)
-            {
-                this->stateTransition.push_back(IR_WHITE_PLUS);
-            }
-        }
-        else if (strcmp(stateTransitionName, "sunset") == 0)
-        {
-            Serial.println("SUNSET received");
             for (int i = 0; i < 16; i++)
             {
                 this->stateTransition.push_back(IR_WHITE_MINUS);
@@ -113,25 +114,33 @@ public:
     {
         return this->stateTransition;
     }
+
+    FluvalState getFinalState() {
+        return this->finalState;
+    }
 };
 
 class FluvalClient
 {
 private:
     std::queue<IR_CMD> command_queue;
+    std::queue<FluvalState> state_queue;
     uint16_t irPin;
     IRsend *ir_sender;
     unsigned long minMillisInterval;
     unsigned long lastCommandTime;
     bool autoEnabled;
-
+    FluvalState currState;
+    
 public:
     FluvalClient()
     {
         this->command_queue = std::queue<IR_CMD>();
+        this->state_queue = std::queue<FluvalState>();
         this->irPin = DEFAULT_IR_PIN;
         this->ir_sender = new IRsend(DEFAULT_IR_PIN);
         this->minMillisInterval = DEFAULT_MIN_MILLIS_INTERVAL;
+        this->currState = FluvalStateTransition::RESET();
     }
     FluvalClient(uint16_t irSenderPin, unsigned long minMillisInterval = DEFAULT_MIN_MILLIS_INTERVAL)
     {
@@ -139,6 +148,7 @@ public:
         this->irPin = irSenderPin;
         this->ir_sender = new IRsend(irSenderPin);
         this->minMillisInterval = minMillisInterval;
+        this->currState = FluvalStateTransition::RESET();
     }
     void loop()
     {
@@ -158,6 +168,11 @@ public:
             pinMode(4, OUTPUT);
             this->ir_sender->sendNEC(command);
             lastCommandTime = millis();
+            // update current state if we reach state pushed onto the state_queue
+            if (state_queue.front() != nullptr) {
+                this->currState = state_queue.front();
+            }
+            state_queue.pop();
         }
         Serial.println();
         Serial.println();
@@ -169,6 +184,19 @@ public:
         for (unsigned int i = 0; i < transitionSequence.size(); i++)
         {
             this->command_queue.push(transitionSequence[i]);
+            if (i == 0) {
+                this->state_queue.push(stateTransition.getFinalState());
+            } else {
+                this->state_queue.push(nullptr);
+            }
         }
     }
+    FluvalState getState() {
+        return this->currState;
+    }
+    int getQueueSize() {
+        return this->state_queue.size();
+    }
 };
+
+#endif

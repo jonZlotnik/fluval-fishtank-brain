@@ -22,6 +22,12 @@ Developer environment:
 
 Note: Using the PlatformIO VSCode extension makes for a more ergonomic development environment, but that is beyond the scope of this readme. Please refer to the beautiful PlatformIO docs for instructions on using.
 
+### Configuring
+
+To configure the firmware before compilation and flashing it to the ESP8266, we
+must rename the [config_example.hpp](include/config_example.hpp) file to `config.hpp`
+and change the values to match your setup.
+
 ### Compiling & Uploading
 
 Configuration for building, uploading, and monitoring over a serial interface is specified in `platformio.ini`
@@ -72,8 +78,9 @@ The firmware subscribes to the following topics and listens for the respective m
     This is useful because it is not possible to query the state of the actual fishtank without light/color sensors and some fancy math. So every now and then, we can simply `reset` the tank to ensure smooth operation incase the tank's state desynchronized from our controller's state.
   - `day` smoothly transitions from night settings to day settings.
   - `night` smoothly transitions from day settings to night settings.
-  - `auto` (default) queries preconfigured web APIs for time and sun data to match your location based on your public IP address.
-- `fish/fluval-flex-9g/lights/raw` messages:
+  - `auto` calculates sunrise and sunset times based on [configured](include/config_example.hpp) location and
+  timezone and schedules state transitions to match. ~~ queries preconfigured web APIs for time and sun data to match your location based on your public IP address. ~~
+- (COMING SOON!) `fish/fluval-flex-9g/lights/raw` messages:
   - `<hex code>` - known codes are [here](src/_fluval_lights.h)
 
 #### HTTP interrrface description
