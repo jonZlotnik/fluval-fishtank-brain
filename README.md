@@ -47,6 +47,9 @@ The controller has two interfaces through which it can be accessed:
 
 Continue reading for how to connect to each of them.
 
+### Example of serial console output as a result of mqtt channel subscription
+![](docs/example-exec-serial-console-mqtt.gif)
+
 ### Testing the MQTT interface
 
 The `docker-compose.yml` file in the root of this repo will spin up an
